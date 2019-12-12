@@ -1,0 +1,352 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Final Project: Weather Forecast Web Scaper\n",
+    "## Objective:\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The purpose of this final project was to build a program that can retrieve current weather data from the National Weather Service's website and return specific information about forecasts to the user on their local machine. \n",
+    "\n",
+    "The program consists of three files total (one test file and two with functions) that work to achieve this goal.\n",
+    "\n",
+    "The three files are:\n",
+    "- weather_scraper.py\n",
+    "- functions.py\n",
+    "- test_weather.py"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Web Scraper\n",
+    "The web scraper uses a package called 'Beautiful Soup' to scrape the National Weather Service's website. To use Beautiful Soup, I had to enter '-pip install bs4' into terminal to install the package. I also had to install a module called 'requests' which helps send HTTP requests from Python.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# web_scraper.py\n",
+    "This file sets up three lists which are used by functions in 'functions.py' to gather specific data about the week's forecast.\n",
+    "\n",
+    "A difficult part of this project was learning how to use the Beautiful Soup package to extract particular pieces of the National Weather Service's website. I had to look up the documentation for many functions within Beautiful Soup online in order to gather pieces of the website that I needed."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 31,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import requests\n",
+    "from bs4 import BeautifulSoup\n",
+    "\n",
+    "# Get URL from National Weather Forecast, after searching for location (La Jolla)\n",
+    "# Set up BeautifulSoup for reading the table of weather conditions\n",
+    "source = requests.get('https://forecast.weather.gov/MapClick.php?lat=32.8592&lon=-117.2519#.Xe9MFpNKh0s').text\n",
+    "soup = BeautifulSoup(source, 'lxml')\n",
+    "week = soup.find(id = 'seven-day-forecast-body')\n",
+    "\n",
+    "# Organize items from HTML container\n",
+    "items = week.find_all(class_='tombstone-container')\n",
+    "\n",
+    "# Fetch the days and times of the week and put them in a list called 'weekly_periods'\n",
+    "weekly_periods = []\n",
+    "for period in items:\n",
+    "    period_names = period.find(class_='period-name').get_text()\n",
+    "    weekly_periods.append(period_names)\n",
+    "\n",
+    "# Fetch the descriptions of the weather conditions of the time periods and put them in a list called 'weekly_descs'\n",
+    "weekly_descs = []\n",
+    "for desc in items:\n",
+    "    short_descriptions = desc.find(class_='short-desc').get_text()\n",
+    "    weekly_descs.append(short_descriptions)\n",
+    "\n",
+    "# Fetch the temperatures for the time periods and put them in a list called 'weekly_temps'\n",
+    "weekly_temps = []\n",
+    "for temp in items:\n",
+    "    temperatures = temp.find(class_='temp').get_text()\n",
+    "    weekly_temps.append(temperatures)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# functions.py\n",
+    "This file contains the functions which operate on the lists defined in 'web_scraper.py.'"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Days of the Week Left\n",
+    "This is the first function in 'functions.py.' \n",
+    "\n",
+    "It's purpose is to find out which days of the week are left based on the current table's display. The reason for this function is that the table from which the web scraper draws upon updates based on the current day of the week and displays data for the next four consecutive days. It also doesn't display any previous days.\n",
+    "\n",
+    "The function works by initizalizing two lists, one called 'all_days' which contains string names for all seven days of the week and 'days_left' which starts as an empty list. The function then uses a for-loop and conditional statement to determine whether or not a day is left in the current week. If the day matches both 'all_days' and 'weeky_periods,' it is added to 'days_left.'"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 32,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def days_of_week_left():\n",
+    "\n",
+    "    days_of_week_left.days_left = []  # Initialize empty days_left list\n",
+    "    days_of_week_left.all_days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']\n",
+    "\n",
+    "    for day in days_of_week_left.all_days and weekly_periods:\n",
+    "        if day in days_of_week_left.all_days and weekly_periods:\n",
+    "            days_of_week_left.days_left.append(day)\n",
+    "\n",
+    "    return days_of_week_left.days_left"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Weather Greeting\n",
+    "This is the second and main function in 'functions.py.'\n",
+    "\n",
+    "The 'weather_greeting()' function is the first part of the program to print to the user on the terminal. It prompts the user with an option to either check the forecast for the current day or to check a specific day of the week. I used a while-loop to make sure that the user input was a valid response to the question by checking inputs until the user enters the appropriate response 'A' or 'B.' The function then uses the 'weekly_descs' and 'weekly_temps' lists to find the weather forecast based on the users input."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 33,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def weather_greeting():\n",
+    "\n",
+    "    days_of_week_left()\n",
+    "    print('Hello! What would you like to know about the weather in La Jolla this week? (Enter a letter)')\n",
+    "\n",
+    "    user_option = input('A. Give me the current forecast for today \\nB. Give me the forecast for another day\\n')\n",
+    "    valid_inputs = ['A', 'B']\n",
+    "\n",
+    "    while True:\n",
+    "        if user_option not in valid_inputs:\n",
+    "            user_option = input('Oops! Enter another option: ')\n",
+    "            continue\n",
+    "\n",
+    "        elif user_option == 'A':\n",
+    "\n",
+    "            if 'High' in weekly_temps[0]:\n",
+    "                high_or_low = 'high'\n",
+    "            else:\n",
+    "                high_or_low = 'low'\n",
+    "\n",
+    "            print('The current forecast for ' + weekly_periods[0] + ' is ' + weekly_descs[0] + '. Current ' + high_or_low + ' for today: ' + weekly_temps[0])\n",
+    "            break\n",
+    "\n",
+    "        elif user_option == 'B':\n",
+    "            print('Which day would you like to display? (Enter a day)')\n",
+    "            day_option = input()\n",
+    "\n",
+    "            while True:\n",
+    "                if day_option not in days_of_week_left.days_left:\n",
+    "                    day_option = input('Oops! Enter another day left in the week: ')\n",
+    "                    continue\n",
+    "\n",
+    "                else:\n",
+    "                    print('The forecast for ' + day_option + ' is: ' + weekly_temps[weekly_periods.index(day_option)])\n",
+    "                    break\n",
+    "        break\n",
+    "        \n",
+    "        return True"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Clothing\n",
+    "The third function in 'functions.py.'\n",
+    "\n",
+    "The final function asks to user if they would like suggestions on what to wear on a certain day of the week, based on the forecasted temperature. If the user enters 'Yes', the function will prompt the user for a specific day to retrieve the temperature. The temperature in the list is originally a piece of a string in the list. To extract the specific integer value I found the start and end index of the values and converted them to ints. The integer values are then compared with three temperature ranges to determine what type of clothing to wear. I again used a while-loop to make sure user input is valid."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 27,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def clothing():\n",
+    "    print('Do you want suggestions on what to wear on a certain day? (Yes or No)')\n",
+    "    clothing_option = input()\n",
+    "\n",
+    "    valid_inputs = ['Yes', 'No']\n",
+    "\n",
+    "    while True:\n",
+    "        if clothing_option not in valid_inputs:\n",
+    "            clothing_option = input('Oops! Enter Yes or No: ')\n",
+    "            continue\n",
+    "\n",
+    "        elif clothing_option == 'Yes':\n",
+    "            print('Which day would you like to know about? (Enter a day)')\n",
+    "            clothing_day = input()\n",
+    "\n",
+    "            while True:\n",
+    "                if clothing_day not in days_of_week_left.days_left:\n",
+    "                    clothing_day = input('Oops! Enter another day left in the week: ')\n",
+    "                    continue\n",
+    "\n",
+    "                elif clothing_day in days_of_week_left.days_left:\n",
+    "\n",
+    "                    temp_index = weekly_temps[weekly_periods.index(clothing_day)]\n",
+    "                    temp = temp_index[6:8]\n",
+    "\n",
+    "                    if int(temp) >= 75:\n",
+    "                        print('It will be warm on ' + clothing_day + ' (' + temp + 'F), try to dress lightly')\n",
+    "                        break\n",
+    "\n",
+    "                    elif int(temp) >= 65 and int(temp) < 75:\n",
+    "                        print('It will be cool on ' + clothing_day + ' (' + temp + 'F), bring a jacket')\n",
+    "                        break\n",
+    "\n",
+    "                    else:\n",
+    "                        print('It will be chilly on ' + clothing_day + ' (' + temp + 'F), try to dress warmly')\n",
+    "                        break\n",
+    "\n",
+    "        elif clothing_option == 'No':\n",
+    "            print('Have a nice day!')\n",
+    "            break\n",
+    "\n",
+    "        break\n",
+    "\n",
+    "        return True"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Run the program\n",
+    "Run the cells bellow to test each function!\n",
+    "(make sure you've ran all the code cells above first)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 28,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Hello! What would you like to know about the weather in La Jolla this week? (Enter a letter)\n",
+      "A. Give me the current forecast for today \n",
+      "B. Give me the forecast for another day\n",
+      "B\n",
+      "Which day would you like to display? (Enter a day)\n",
+      "Friday\n",
+      "The forecast for Friday is: High: 65 °F\n"
+     ]
+    }
+   ],
+   "source": [
+    "weather_greeting()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 29,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Do you want suggestions on what to wear on a certain day? (Yes or No)\n",
+      "Yes\n",
+      "Which day would you like to know about? (Enter a day)\n",
+      "Saturday\n",
+      "It will be chilly on Saturday (63F), try to dress warmly\n"
+     ]
+    }
+   ],
+   "source": [
+    "clothing()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Testing\n",
+    "The third file in the program is used for testing purposes. The two functions I tested were 'clothing()' and 'weather_greeting()'. Because neither of them need return statement, I added a dummy return to each set to True. The test functions below assert the values."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 39,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# in terminal install pytest\n",
+    "# Instructions: pip install pytest, bs4\n",
+    "import pytest\n",
+    "#from functions import clothing, weather_greeting\n",
+    "\n",
+    "def test_clothing():\n",
+    "    anticipated_return = True\n",
+    "\n",
+    "    clothing_true = clothing()\n",
+    "\n",
+    "    assert anticipated_return == clothing_true\n",
+    "\n",
+    "def test_weather_greeting():\n",
+    "    anticipated_return = True\n",
+    "\n",
+    "    weather_true = weather_greeting()\n",
+    "\n",
+    "    assert anticipated_return == weather_true"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.6.7"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
